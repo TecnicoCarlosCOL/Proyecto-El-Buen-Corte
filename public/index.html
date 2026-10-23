@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>El Buen Corte - Reservar cita</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card">
+    <h1>El Buen Corte</h1>
+    <p class="subtitle">Reserva tu cita</p>
+
+    <label>Servicio</label>
+    <select id="servicio"></select>
+
+    <label>Fecha</label>
+    <input type="date" id="fecha">
+
+    <label>Horarios disponibles</label>
+    <div id="horarios" class="horarios-grid"></div>
+
+    <label>Nombre completo</label>
+    <input type="text" id="nombre" placeholder="Escribe tu nombre">
+
+    <button id="btnReservar">Confirmar reserva</button>
+    <p id="mensaje"></p>
+  </div>
+
+  <script src="cliente.js"></script>
+</body>
+</html>
