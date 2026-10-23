@@ -1,24 +1,24 @@
 {
   "name": "el-buen-corte",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Sistema de reservas con agenda para la barbería El Buen Corte",
+  "main": "server.js",
   "scripts": {
-  "dev": "nodemon server.js"
-},
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.10.1"
+    "bcryptjs": "(deja tu versión)",
+    "cors": "(deja tu versión)",
+    "dotenv": "(deja tu versión)",
+    "express": "(deja tu versión)",
+    "jsonwebtoken": "(deja tu versión)",
+    "mongoose": "(deja tu versión)"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "(deja tu versión)"
   }
 }
