@@ -14,6 +14,7 @@ app.use(express.static('public'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/servicios', require('./routes/servicioRoutes'));
 app.use('/api/citas', require('./routes/citaRoutes'));
+app.use('/api/bloqueos', require('./routes/bloqueoRoutes'));
 
 app.get('/', (req, res) => {
   res.send('El Buen Corte - servidor funcionando');

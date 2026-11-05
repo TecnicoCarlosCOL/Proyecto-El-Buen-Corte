@@ -2,22 +2,36 @@ const express = require('express');
 const router = express.Router();
 const Cita = require('../models/Cita');
 const Servicio = require('../models/Servicio');
+const Bloqueo = require('../models/Bloqueo');
 const verificarToken = require('../middleware/verificarToken');
+const { HORAS, APERTURA, CIERRE } = require('../config/horarios');
 
-const HORAS_VALIDAS = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
 const FORMATO_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const ZONA = 'America/Bogota';
 
-// Ver disponibilidad de una fecha (público)
+// Horarios de atención (público): los usan la reserva y la agenda
+router.get('/horarios', (req, res) => {
+  res.json({ horas: HORAS, apertura: APERTURA, cierre: CIERRE });
+});
+
+// Horas NO disponibles de una fecha: citas activas + horas bloqueadas por el barbero
 router.get('/disponibilidad/:fecha', async (req, res) => {
-  if (!FORMATO_FECHA.test(req.params.fecha)) {
+  const { fecha } = req.params;
+  if (!FORMATO_FECHA.test(fecha)) {
     return res.status(400).json({ mensaje: 'Fecha inválida' });
   }
-  const citas = await Cita.find({
-    fecha: req.params.fecha,
-    estado: { $ne: 'cancelada' }
-  }).select('hora -_id');
-  res.json(citas);
+
+  const [citas, bloqueos] = await Promise.all([
+    Cita.find({ fecha, estado: { $ne: 'cancelada' } }).select('hora -_id'),
+    Bloqueo.find({ fecha })
+  ]);
+
+  const noDisponibles = new Set(citas.map(c => c.hora));
+  HORAS.forEach(h => {
+    if (bloqueos.some(b => b.desde <= h && h < b.hasta)) noDisponibles.add(h);
+  });
+
+  res.json([...noDisponibles].map(hora => ({ hora })));
 });
 
 // Reservar una cita (público)
@@ -25,7 +39,7 @@ router.post('/', async (req, res) => {
   try {
     const { cliente_nombre, servicio, fecha, hora } = req.body;
 
-    if (!HORAS_VALIDAS.includes(hora)) {
+    if (!HORAS.includes(hora)) {
       return res.status(400).json({ mensaje: 'Hora fuera del horario de atención' });
     }
 
@@ -44,6 +58,12 @@ router.post('/', async (req, res) => {
 
     if (typeof servicio !== 'string' || !(await Servicio.exists({ _id: servicio }))) {
       return res.status(400).json({ mensaje: 'Servicio no válido' });
+    }
+
+    // El barbero bloqueó ese día o esa hora
+    const bloqueado = await Bloqueo.exists({ fecha, desde: { $lte: hora }, hasta: { $gt: hora } });
+    if (bloqueado) {
+      return res.status(409).json({ mensaje: 'El barbero no atiende en ese horario, elige otro' });
     }
 
     const yaOcupado = await Cita.findOne({

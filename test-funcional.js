@@ -73,7 +73,7 @@ async function main() {
   r = await reservar('TEST-3', servicio, '2020-01-01', '10:00');
   check('Rechaza fecha pasada (400)', r.status === 400);
 
-  r = await reservar('TEST-4', servicio, '2030-03-01', '13:00');
+  r = await reservar('TEST-4', servicio, '2030-03-01', '21:00');
   check('Rechaza hora fuera del horario de atencion (400)', r.status === 400);
 
   r = await reservar('TEST-5', '123', FECHA, '10:00');
