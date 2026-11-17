@@ -116,3 +116,12 @@ document.getElementById('btnReservar').addEventListener('click', async () => {
     error(data.mensaje || 'Error al reservar');
   }
 });
+
+async function iniciar() {
+  const res = await fetch(`${API}/citas/horarios`);
+  const info = await res.json();
+  HORAS = info.horas;
+  await cargarServicios();
+}
+
+iniciar();
