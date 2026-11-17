@@ -69,23 +69,39 @@ document.getElementById('btnReservar').addEventListener('click', async () => {
   const servicio = document.getElementById('servicio').value;
   const fecha = inputFecha.value;
   const nombre = document.getElementById('nombre').value.trim();
+  const telefono = document.getElementById('telefono').value.trim();
+  const acepta = document.getElementById('acepta').checked;
 
-  if (!fecha || !horaSeleccionada || !nombre) {
-    mensaje.textContent = 'Completa todos los campos';
+  function error(texto) {
     mensaje.style.color = 'red';
-    return;
+    mensaje.textContent = texto;
+  }
+
+  if (!fecha || !horaSeleccionada || !nombre || !telefono) {
+    return error('Completa todos los campos');
+  }
+
+  let digitos = telefono.replace(/\D/g, '');
+  if (digitos.length === 12 && digitos.startsWith('57')) digitos = digitos.slice(2);
+  if (!/^3\d{9}$/.test(digitos)) {
+    return error('Escribe un número de WhatsApp válido (10 dígitos, empieza por 3)');
+  }
+
+  if (!acepta) {
+    return error('Debes autorizar el uso de tus datos para reservar');
   }
 
   if (fecha < hoy) {
-    mensaje.textContent = 'No puedes reservar en una fecha pasada';
-    mensaje.style.color = 'red';
-    return;
+    return error('No puedes reservar en una fecha pasada');
   }
 
   const res = await fetch(`${API}/citas`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cliente_nombre: nombre, servicio, fecha, hora: horaSeleccionada })
+    body: JSON.stringify({
+      cliente_nombre: nombre, servicio, fecha, hora: horaSeleccionada,
+      telefono, acepta_datos: true
+    })
   });
   const data = await res.json();
 
@@ -93,18 +109,10 @@ document.getElementById('btnReservar').addEventListener('click', async () => {
     mensaje.style.color = 'green';
     mensaje.textContent = '¡Cita reservada con éxito!';
     document.getElementById('nombre').value = '';
+    document.getElementById('telefono').value = '';
+    document.getElementById('acepta').checked = false;
     cargarHorarios();
   } else {
-    mensaje.style.color = 'red';
-    mensaje.textContent = data.mensaje || 'Error al reservar';
+    error(data.mensaje || 'Error al reservar');
   }
 });
-
-async function iniciar() {
-  const res = await fetch(`${API}/citas/horarios`);
-  const info = await res.json();
-  HORAS = info.horas;
-  await cargarServicios();
-}
-
-iniciar();

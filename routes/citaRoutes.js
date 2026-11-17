@@ -8,6 +8,13 @@ const { HORAS, APERTURA, CIERRE } = require('../config/horarios');
 
 const FORMATO_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const ZONA = 'America/Bogota';
+// Acepta "300 123 4567", "+57 300 123 4567", etc. y devuelve 10 dígitos, o null si no es válido
+function normalizarTelefono(valor) {
+  if (typeof valor !== 'string') return null;
+  let digitos = valor.replace(/\D/g, '');
+  if (digitos.length === 12 && digitos.startsWith('57')) digitos = digitos.slice(2);
+  return /^3\d{9}$/.test(digitos) ? digitos : null;
+}
 
 // Horarios de atención (público): los usan la reserva y la agenda
 router.get('/horarios', (req, res) => {
@@ -37,7 +44,7 @@ router.get('/disponibilidad/:fecha', async (req, res) => {
 // Reservar una cita (público)
 router.post('/', async (req, res) => {
   try {
-    const { cliente_nombre, servicio, fecha, hora } = req.body;
+    const { cliente_nombre, servicio, fecha, hora, telefono, acepta_datos } = req.body;
 
     if (!HORAS.includes(hora)) {
       return res.status(400).json({ mensaje: 'Hora fuera del horario de atención' });
@@ -45,6 +52,15 @@ router.post('/', async (req, res) => {
 
     if (typeof fecha !== 'string' || !FORMATO_FECHA.test(fecha)) {
       return res.status(400).json({ mensaje: 'Fecha inválida' });
+    }
+
+    const whatsapp = normalizarTelefono(telefono);
+    if (!whatsapp) {
+      return res.status(400).json({ mensaje: 'Escribe un número de WhatsApp válido (10 dígitos, empieza por 3)' });
+    }
+
+    if (acepta_datos !== true) {
+      return res.status(400).json({ mensaje: 'Debes autorizar el tratamiento de tus datos para reservar' });
     }
 
     // Se compara contra la hora de Colombia, sin importar dónde esté el servidor
@@ -74,7 +90,7 @@ router.post('/', async (req, res) => {
       return res.status(409).json({ mensaje: 'Ese horario ya está reservado, elige otro' });
     }
 
-    const nuevaCita = new Cita({ cliente_nombre, servicio, fecha, hora });
+    const nuevaCita = new Cita({ cliente_nombre, servicio, fecha, hora, telefono: whatsapp });
     await nuevaCita.save();
     res.status(201).json(nuevaCita);
   } catch (error) {

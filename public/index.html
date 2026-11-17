@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>El Buen Corte - Reservar cita</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -21,7 +21,15 @@
     <div id="horarios" class="horarios-grid"></div>
 
     <label>Nombre completo</label>
-    <input type="text" id="nombre" placeholder="Escribe tu nombre">
+    <input type="text" id="nombre" placeholder="Escribe tu nombre" maxlength="100">
+
+    <label>Número de WhatsApp</label>
+    <input type="tel" id="telefono" placeholder="Ej: 300 123 4567" inputmode="numeric" autocomplete="tel" maxlength="16">
+
+    <label class="check">
+      <input type="checkbox" id="acepta">
+      Autorizo el uso de mi nombre y número de WhatsApp para gestionar mi cita y contactarme sobre ella.
+    </label>
 
     <button id="btnReservar">Confirmar reserva</button>
     <p id="mensaje"></p>

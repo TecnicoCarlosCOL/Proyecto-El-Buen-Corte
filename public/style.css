@@ -18,7 +18,7 @@ h3 { margin: 18px 0 8px; font-size: 16px; }
 .subtitle { color: #666; margin: 0 0 16px; }
 label { display: block; font-size: 13px; color: #666; margin: 14px 0 4px; }
 
-select, input[type=text], input[type=password], input[type=date] {
+select, input[type=text], input[type=password], input[type=tel], input[type=date] {
   width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;
   font-size: 16px; background: white;
 }
@@ -118,9 +118,12 @@ table.semana td.bloq {
 /* Bloqueos */
 .form-bloqueo { border: 1px solid #eee; border-radius: 10px; padding: 4px 16px 16px; max-width: 520px; }
 .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-label.check { display: flex; align-items: center; gap: 8px; color: #333; font-size: 14px; }
+label.check { display: flex; align-items: flex-start; gap: 8px; color: #333; font-size: 14px; }
 .item-bloqueo {
   display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
   border: 1px solid #eee; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;
 }
 .item-bloqueo small { display: block; color: #777; }
+/* Enlace a WhatsApp */
+.wa { color: #1e7a4d; font-size: 13px; font-weight: 600; text-decoration: none; }
+.wa:hover { text-decoration: underline; }

@@ -26,10 +26,13 @@ async function api(ruta, opciones = {}, token) {
   return { status: res.status, data };
 }
 
-function reservar(nombre, servicio, fecha, hora) {
+function reservar(nombre, servicio, fecha, hora, extra = {}) {
   return api('/citas', {
     method: 'POST',
-    body: JSON.stringify({ cliente_nombre: nombre, servicio, fecha, hora })
+    body: JSON.stringify({
+      cliente_nombre: nombre, servicio, fecha, hora,
+      telefono: '300 123 4567', acepta_datos: true, ...extra
+    })
   });
 }
 
@@ -65,6 +68,7 @@ async function main() {
   r = await reservar('TEST-1', servicio, FECHA, '09:00');
   check('Reserva valida (201)', r.status === 201);
   check('La cita nace como pendiente', r.data && r.data.estado === 'pendiente');
+  check('Guarda el numero de WhatsApp sin espacios', r.data && r.data.telefono === '3001234567');
   const id = r.data && r.data._id;
 
   r = await reservar('TEST-2', servicio, FECHA, '09:00');
@@ -80,7 +84,13 @@ async function main() {
   check('Rechaza servicio invalido (400)', r.status === 400);
 
   r = await reservar('', servicio, FECHA, '10:00');
-  check('Rechaza nombre vacio (400)', r.status === 400);
+    check('Rechaza nombre vacio (400)', r.status === 400);
+
+  r = await reservar('TEST-8', servicio, FECHA, '10:00', { telefono: '12345' });
+  check('Rechaza numero de WhatsApp invalido (400)', r.status === 400);
+
+  r = await reservar('TEST-9', servicio, FECHA, '10:00', { acepta_datos: false });
+  check('Rechaza si no autoriza el tratamiento de datos (400)', r.status === 400);
 
   r = await api(`/citas/disponibilidad/${FECHA}`);
   check('La disponibilidad muestra 09:00 como ocupado', r.data.some(c => c.hora === '09:00'));

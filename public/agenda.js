@@ -14,6 +14,7 @@ if (!token) {
 let HORAS = [];
 let CIERRE = '20:00';
 let bloqueos = [];
+const citasPorId = {};
 const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 let vista = 'semana';
@@ -57,6 +58,16 @@ function salir() {
   window.location.href = 'login.html';
 }
 
+// ---------- WhatsApp ----------
+// Chat vacío: el barbero escribe el mensaje a mano
+function urlWhatsApp(telefono) {
+  return `https://wa.me/57${telefono}`;
+}
+function enlaceWhatsApp(c) {
+  if (!c.telefono) return '';
+  return `<a class="wa" href="${urlWhatsApp(c.telefono)}" target="_blank" rel="noopener">WhatsApp ${esc(c.telefono)}</a>`;
+}
+
 // ---------- Comunicación con el servidor ----------
 async function llamar(ruta, opciones = {}) {
   const res = await fetch('/api' + ruta, {
@@ -71,7 +82,10 @@ async function llamar(ruta, opciones = {}) {
 }
 async function pedirCitas(query) {
   const res = await llamar('/citas' + query);
-  return res ? res.json() : null;
+  if (!res) return null;
+  const citas = await res.json();
+  citas.forEach(c => { citasPorId[c._id] = c; });      // guardadas para poder abrir su WhatsApp
+  return citas;
 }
 async function cargarBloqueos() {
   const res = await llamar('/bloqueos');
@@ -108,6 +122,7 @@ async function renderDia() {
         <div>
           <strong>${esc(c.cliente_nombre)}</strong>
           <small>${c.servicio ? esc(c.servicio.nombre) : '-'}</small>
+          <small>${enlaceWhatsApp(c) || 'Sin WhatsApp'}</small>
         </div>
         <div><span class="badge ${c.estado}">${c.estado}</span> ${botones(c)}</div>
       </div>`;
@@ -164,13 +179,14 @@ async function renderLista() {
 
   let filas = '';
   if (citas.length === 0) {
-    filas = '<tr><td colspan="6" style="text-align:center; color:#888;">No hay citas registradas</td></tr>';
+    filas = '<tr><td colspan="7" style="text-align:center; color:#888;">No hay citas registradas</td></tr>';
   }
   citas.forEach(c => {
     filas += `<tr>
       <td data-label="Fecha">${c.fecha}</td>
       <td data-label="Hora">${ver(c.hora)}</td>
       <td data-label="Cliente">${esc(c.cliente_nombre)}</td>
+      <td data-label="WhatsApp">${enlaceWhatsApp(c) || '-'}</td>
       <td data-label="Servicio">${c.servicio ? esc(c.servicio.nombre) : '-'}</td>
       <td data-label="Estado"><span class="badge ${c.estado}">${c.estado}</span></td>
       <td data-label="Acciones">${botones(c) || '-'}</td>
@@ -179,7 +195,7 @@ async function renderLista() {
 
   document.getElementById('contenido').innerHTML = `
     <div class="tabla-scroll"><table class="lista">
-      <thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Servicio</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>WhatsApp</th><th>Servicio</th><th>Estado</th><th>Acciones</th></tr></thead>
       <tbody>${filas}</tbody>
     </table></div>`;
 }
@@ -296,15 +312,35 @@ function irADia(fecha) {
   cambiarVista('dia');
 }
 
-// ---------- Acciones sobre las citas ----------
+// ---------- Acciones sobre las citas (atender / cancelar) ----------
 async function accionCita(id, accion) {
+  const cita = citasPorId[id];
+  const tieneWhatsApp = !!(cita && cita.telefono);
+
+  // La pestaña se abre AHORA, dentro del clic, para que el navegador no la bloquee.
+  // Si la cita se actualiza bien, esa pestaña se dirige al chat de WhatsApp.
+  const ventana = tieneWhatsApp ? window.open('', '_blank') : null;
+
   const res = await llamar(`/citas/${id}/${accion}`, { method: 'PUT' });
-  if (!res) return;
+  if (!res) {
+    if (ventana) ventana.close();
+    return;
+  }
 
   if (res.ok) {
     mostrarMensaje('');
+    if (ventana) {
+      ventana.opener = null;
+      ventana.location.href = urlWhatsApp(cita.telefono);
+    } else if (tieneWhatsApp) {
+      // El navegador bloqueó la pestaña: se ofrece el enlace
+      const m = document.getElementById('mensaje');
+      m.style.color = '#333';
+      m.innerHTML = `Cita actualizada. <a class="wa" href="${urlWhatsApp(cita.telefono)}" target="_blank" rel="noopener">Abrir WhatsApp</a>`;
+    }
     cargar();
   } else {
+    if (ventana) ventana.close();
     const data = await res.json();
     mostrarMensaje(data.mensaje || 'Error al actualizar la cita');
   }

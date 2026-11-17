@@ -17,11 +17,13 @@ async function main() {
     fetch(`${URL}/citas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+            body: JSON.stringify({
         cliente_nombre: `TEST-${i + 1}`,
         servicio,
         fecha: FECHA,
-        hora: HORA
+        hora: HORA,
+        telefono: '3001234567',
+        acepta_datos: true
       })
     }).then(r => r.status)
   );

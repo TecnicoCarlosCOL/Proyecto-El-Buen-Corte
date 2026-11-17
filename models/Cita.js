@@ -5,6 +5,7 @@ const citaSchema = new mongoose.Schema({
   servicio: { type: mongoose.Schema.Types.ObjectId, ref: 'Servicio', required: true },
   fecha: { type: String, required: true, match: /^\d{4}-\d{2}-\d{2}$/ },   // "2026-08-20"
   hora: { type: String, required: true, match: /^\d{2}:\d{2}$/ },          // "09:00"
+    telefono: { type: String, match: /^3\d{9}$/ },
   estado: {
     type: String,
     enum: ['pendiente', 'atendida', 'cancelada'],
